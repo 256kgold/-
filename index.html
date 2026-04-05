@@ -3,26 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>李婉小宝宝 · 专属告白星河</title>
+    <title>李婉小宝宝 · 专属浪漫告白</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* 避免移动端长按菜单干扰，不影响体验 */
+            user-select: none;
         }
 
         body {
             width: 100%;
             height: 100vh;
             overflow: hidden;
-            background: radial-gradient(ellipse at center, #0a0f2a 0%, #03050b 100%);
-            font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', system-ui, -apple-system, 'Noto Sans', sans-serif;
-            touch-action: pan-x pan-y; /* 保留手势但防止缩放干扰 */
+            background: linear-gradient(145deg, #FFD0E0 0%, #FFB0C8 100%);
+            font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', system-ui, -apple-system, 'Noto Sans', cursive;
+            touch-action: manipulation;
+            position: relative;
         }
 
-        /* 画布层：动态星空 + 粒子爱心 */
-        canvas {
+        /* 3D画布容器 */
+        #canvas3d {
             position: absolute;
             top: 0;
             left: 0;
@@ -30,12 +31,14 @@
             height: 100%;
             display: block;
             z-index: 1;
+            opacity: 0;
+            transition: opacity 2s ease;
         }
 
-        /* 主内容区 优雅浮层 */
-        .love-container {
+        /* 主界面UI层 */
+        .ui-container {
             position: relative;
-            z-index: 10;
+            z-index: 20;
             width: 100%;
             height: 100%;
             display: flex;
@@ -43,169 +46,150 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            pointer-events: none; /* 让点击穿透到canvas，但内部按钮需要可点 */
+            pointer-events: none;
+            transition: all 0.5s ease;
         }
 
-        /* 需要可点击的部分单独启用 */
         .clickable {
             pointer-events: auto;
         }
 
-        /* 主标题 + 名字艺术字 */
-        .greeting {
-            margin-bottom: 2rem;
-            animation: fadeInUp 1.2s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
-            opacity: 0;
-            transform: translateY(30px);
+        /* 标题卡片 */
+        .question-card {
+            background: rgba(255, 235, 245, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 68px 48px 72px 48px;
+            padding: 2rem 2rem;
+            width: 85%;
+            max-width: 380px;
+            margin: 0 auto;
+            box-shadow: 0 30px 45px rgba(255, 80, 120, 0.3), 0 0 0 3px rgba(255, 200, 220, 0.8) inset;
+            animation: floatCard 3s infinite ease-in-out;
+            border: 1px solid #FFA5C0;
         }
 
-        .greeting .line1 {
-            font-size: clamp(1rem, 5vw, 1.4rem);
-            letter-spacing: 4px;
-            font-weight: 300;
-            color: rgba(255, 245, 220, 0.8);
-            text-shadow: 0 0 8px rgba(255, 120, 160, 0.6);
-            backdrop-filter: blur(2px);
-        }
-
-        .baby-name {
-            font-size: clamp(2.4rem, 12vw, 4.8rem);
+        .big-question {
+            font-size: clamp(1.6rem, 7vw, 2.4rem);
             font-weight: 800;
-            background: linear-gradient(135deg, #FFDEE9 0%, #FFB5C8 40%, #FF8BA7 100%);
+            background: linear-gradient(135deg, #E8436E, #FF6B8E, #FFA0C0);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
-            text-shadow: 0 0 25px rgba(255, 105, 150, 0.5);
-            margin: 0.4rem 0;
             letter-spacing: 2px;
-            animation: gentleGlow 2.5s infinite alternate;
+            margin-bottom: 0.5rem;
         }
 
-        .love-tagline {
-            font-size: clamp(0.9rem, 4vw, 1.2rem);
-            color: #FFE3EE;
-            background: rgba(10, 5, 30, 0.5);
-            backdrop-filter: blur(8px);
-            display: inline-block;
-            padding: 0.5rem 1.6rem;
-            border-radius: 60px;
-            border: 1px solid rgba(255, 200, 220, 0.4);
-            font-weight: 400;
-            letter-spacing: 2px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-
-        /* 心形主卡片 */
-        .heart-card {
-            background: rgba(20, 12, 36, 0.55);
-            backdrop-filter: blur(16px);
-            border-radius: 64px 48px 72px 48px;
-            padding: 1.5rem 2rem;
-            width: 85%;
-            max-width: 360px;
-            margin: 1.5rem auto;
-            border: 1px solid rgba(255, 160, 190, 0.5);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 200, 220, 0.2) inset;
-            transition: transform 0.3s ease;
-            animation: floatCard 4s infinite ease-in-out;
-        }
-
-        .heart-card p {
-            color: #FFF0F5;
-            font-size: 1.1rem;
-            line-height: 1.5;
-            font-weight: 500;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-
-        .heart-card .big-heart {
-            font-size: 2.2rem;
-            margin: 0.5rem 0;
-            letter-spacing: 8px;
-        }
-
-        /* 时间轴 浪漫誓言 */
-        .vows {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1rem;
-            margin: 1rem 0 1.8rem;
-        }
-
-        .vow-item {
-            background: rgba(255, 215, 225, 0.12);
-            backdrop-filter: blur(5px);
-            border-radius: 60px;
-            padding: 0.5rem 1.2rem;
-            font-size: 0.85rem;
-            color: #FFD9E8;
-            font-weight: 400;
-            border: 0.5px solid rgba(255, 175, 200, 0.6);
-            letter-spacing: 1px;
-        }
-
-        /* 按钮 开启表白魔法 */
-        .btn-magic {
-            pointer-events: auto;
-            background: linear-gradient(120deg, #FF8AAE, #FF5E8E);
-            border: none;
-            padding: 0.9rem 2.2rem;
+        .baby-name-display {
             font-size: 1.2rem;
-            font-weight: 600;
+            color: #D43F6B;
+            background: rgba(255, 220, 235, 0.7);
+            display: inline-block;
+            padding: 0.2rem 1.2rem;
+            border-radius: 40px;
+            margin-bottom: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            border: none;
+            padding: 0.9rem 1.8rem;
+            font-size: 1.2rem;
+            font-weight: 700;
             border-radius: 60px;
-            color: #2E0A1A;
-            box-shadow: 0 10px 25px rgba(255, 80, 120, 0.5);
             cursor: pointer;
             transition: all 0.2s ease;
-            margin-top: 1rem;
-            letter-spacing: 2px;
-            backdrop-filter: blur(2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             font-family: inherit;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            min-width: 110px;
+            text-align: center;
         }
 
-        .btn-magic:active {
-            transform: scale(0.96);
-            box-shadow: 0 5px 15px rgba(255, 80, 120, 0.7);
+        .btn-yes {
+            background: linear-gradient(120deg, #FF7A9E, #FF4D7A);
+            color: white;
+            border: 2px solid #FFC0D5;
+            transform: scale(1);
+            box-shadow: 0 8px 25px #FF5A8A;
         }
 
-        /* 音乐控制浮层优雅小巧 */
-        .music-tip {
+        .btn-no {
+            background: rgba(200, 200, 210, 0.8);
+            backdrop-filter: blur(5px);
+            color: #5E3A4A;
+            border: 1px solid #FFB0C0;
+            transition: all 0.15s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+
+        /* 弹幕容器 */
+        .danmaku-container {
             position: fixed;
-            bottom: 24px;
-            right: 20px;
-            z-index: 20;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            border-radius: 40px;
-            padding: 8px 14px;
-            font-size: 12px;
-            color: #FFC0D0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            pointer-events: auto;
-            cursor: pointer;
-            border: 0.5px solid rgba(255,200,200,0.5);
-            font-weight: 400;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 30;
+            overflow: hidden;
         }
 
-        .music-tip span {
-            font-size: 16px;
+        .danmaku-item {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #FF3B6F;
+            text-shadow: 0 0 5px #FFC0E0;
+            animation: fly linear forwards;
+            z-index: 35;
+            font-family: 'Segoe UI', 'PingFang SC', cursive;
         }
 
-        /* 动画区 */
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(30px);}
-            100% { opacity: 1; transform: translateY(0);}
+        /* 拒绝后的提示浮层 */
+        .reject-toast {
+            position: fixed;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(12px);
+            color: #FFE0EC;
+            padding: 0.8rem 1.6rem;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 500;
+            z-index: 40;
+            animation: fadeOut 1.8s forwards;
+            white-space: nowrap;
+            pointer-events: none;
+            border: 1px solid #FF90B0;
         }
 
-        @keyframes gentleGlow {
-            0% { text-shadow: 0 0 5px #FF9EBC; opacity: 0.95;}
-            100% { text-shadow: 0 0 20px #FF5E8E, 0 0 5px #FFB7D2; opacity: 1;}
+        /* 成功后的爱心爆炸容器 */
+        .heart-explosion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 45;
+        }
+
+        .float-heart {
+            position: absolute;
+            font-size: 1.8rem;
+            animation: floatUp 1.5s ease-out forwards;
+            filter: drop-shadow(0 0 6px #FF5480);
         }
 
         @keyframes floatCard {
@@ -214,446 +198,419 @@
             100% { transform: translateY(0px);}
         }
 
-        /* 粒子爱心特效区域 自定义 */
-        @keyframes twinkle {
-            0% { opacity: 0.3;}
-            100% { opacity: 1;}
+        @keyframes fly {
+            0% { transform: translateX(100vw); opacity: 1; }
+            100% { transform: translateX(-250px); opacity: 0; }
         }
 
-        /* 响应式调整 */
-        @media (max-width: 550px) {
-            .heart-card {
-                padding: 1.2rem 1.2rem;
-                width: 88%;
-            }
-            .vow-item {
-                font-size: 0.7rem;
-                padding: 0.3rem 1rem;
-            }
-            .btn-magic {
-                padding: 0.7rem 1.8rem;
-                font-size: 1rem;
-            }
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateX(-50%) scale(1); }
+            70% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(-50%) scale(0.9); visibility: hidden; }
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.6); opacity: 1; }
+            100% { transform: translateY(-200px) scale(1.2); opacity: 0; }
+        }
+
+        /* 成功画面大标题 */
+        .success-title {
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(255, 240, 245, 0.9);
+            backdrop-filter: blur(30px);
+            padding: 1rem 2rem;
+            border-radius: 100px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #E8436E;
+            white-space: nowrap;
+            z-index: 50;
+            animation: popScale 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            border: 2px solid #FFB0D0;
+            text-align: center;
+        }
+
+        @keyframes popScale {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            80% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        /* 3D画布激活时隐藏UI部分元素 */
+        .hidden-ui {
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.4s;
+        }
+
+        .visible-ui {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 底部小提示 */
+        .hint {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #FF80A0;
+            background: rgba(255,255,240,0.5);
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 
-<canvas id="starCanvas"></canvas>
-<canvas id="heartCanvas"></canvas>
+<!-- 3D 粒子爱心画布 -->
+<canvas id="canvas3d"></canvas>
 
-<div class="love-container">
-    <div class="greeting">
-        <div class="line1">✨ 给全世界最可爱的 ✨</div>
-        <div class="baby-name">李婉小宝宝</div>
-        <div class="love-tagline">♾️ 专属心动限定 ♾️</div>
+<!-- 弹幕专用层 -->
+<div id="danmakuContainer" class="danmaku-container"></div>
+<div id="explosionContainer" class="heart-explosion"></div>
+
+<div class="ui-container" id="uiContainer">
+    <div class="question-card clickable">
+        <div class="big-question">✨ 可以成为我的恋人吗？ ✨</div>
+        <div class="baby-name-display">💗 最可爱的 李婉小宝宝 💗</div>
+        <div class="button-group">
+            <button class="btn btn-yes clickable" id="yesBtn">💖 可以 💖</button>
+            <button class="btn btn-no clickable" id="noBtn">😢 不要</button>
+        </div>
+        <div class="hint">✦ 悄悄告诉你，拒绝我会心疼的 ✦</div>
     </div>
-
-    <div class="heart-card">
-        <p>💗 我想把全宇宙的温柔都攒给你 💗</p>
-        <div class="big-heart">❤️‍🔥 ❤️‍🔥 ❤️‍🔥</div>
-        <p>你是我猝不及防的心动，亦是我始料不及的惊鸿。</p>
-    </div>
-
-    <div class="vows">
-        <div class="vow-item">✨ 每天爱你三千遍</div>
-        <div class="vow-item">🌙 陪你朝朝暮暮</div>
-        <div class="vow-item">🌸 李婉专属偏爱</div>
-    </div>
-
-    <button class="btn-magic clickable" id="magicBtn">💖 点击接收心动信号 💖</button>
 </div>
 
-<div class="music-tip clickable" id="musicControl">
-    <span>🎵</span> <span id="musicStatus">告白旋律 · 轻点播放</span>
-</div>
-
-<script>
-    (function() {
-        // ---------- 1. 星空背景Canvas ----------
-        const starCanvas = document.getElementById('starCanvas');
-        const starCtx = starCanvas.getContext('2d');
-        let stars = [];
-        let starCount = 200;
-
-        function resizeStars() {
-            starCanvas.width = window.innerWidth;
-            starCanvas.height = window.innerHeight;
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
         }
+    }
+</script>
 
-        function initStars() {
-            stars = [];
-            for (let i = 0; i < starCount; i++) {
-                stars.push({
-                    x: Math.random() * starCanvas.width,
-                    y: Math.random() * starCanvas.height,
-                    radius: Math.random() * 2 + 1,
-                    alpha: Math.random() * 0.6 + 0.3,
-                    speedX: (Math.random() - 0.5) * 0.2,
-                    speedY: (Math.random() - 0.5) * 0.1,
-                });
-            }
+<script type="module">
+    import * as THREE from 'three';
+
+    // ------------------------- 3D 粉红爱心粒子 (立体旋转) -------------------------
+    const canvas3d = document.getElementById('canvas3d');
+    const scene = new THREE.Scene();
+    scene.background = null; // 透明背景，透出css渐变
+    scene.fog = new THREE.FogExp2(0xFFD0E0, 0.008);
+    
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 35);
+    camera.lookAt(0, 0, 0);
+    
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000, 0); // 透明
+    
+    // 心形参数方程
+    const heartPoints = [];
+    const particleCount = 3800;
+    const positions = new Float32Array(particleCount * 3);
+    
+    // 生成心形点云 (范围标准化)
+    for (let i = 0; i < particleCount; i++) {
+        // 采用参数t，增加厚度
+        const t = Math.random() * Math.PI * 2;
+        const xRaw = 16 * Math.pow(Math.sin(t), 3);
+        const yRaw = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+        // 加入随机厚度z
+        const zOffset = (Math.random() - 0.5) * 4.2;
+        // 随机缩放比例让爱心更丰满
+        const scaleFactor = 0.72;
+        let x = xRaw * scaleFactor + (Math.random() - 0.5) * 0.45;
+        let y = yRaw * scaleFactor + (Math.random() - 0.5) * 0.45;
+        let z = zOffset * 1.2;
+        
+        // 增加内部填充: 有一部分粒子在内部更密集
+        if (Math.random() > 0.65) {
+            const innerT = Math.random() * Math.PI * 2;
+            const ix = 16 * Math.pow(Math.sin(innerT), 3);
+            const iy = 13 * Math.cos(innerT) - 5 * Math.cos(2*innerT) - 2*Math.cos(3*innerT) - Math.cos(4*innerT);
+            x = ix * scaleFactor * 0.85 + (Math.random() - 0.5) * 0.7;
+            y = iy * scaleFactor * 0.85 + (Math.random() - 0.5) * 0.7;
+            z = (Math.random() - 0.5) * 3.2;
         }
-
-        function drawStars() {
-            if (!starCtx) return;
-            starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-            starCtx.fillStyle = 'white';
-            for (let s of stars) {
-                starCtx.beginPath();
-                starCtx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-                starCtx.fillStyle = `rgba(255, 240, 220, ${s.alpha})`;
-                starCtx.fill();
-                // 微动
-                s.x += s.speedX;
-                s.y += s.speedY;
-                if (s.x < 0) s.x = starCanvas.width;
-                if (s.x > starCanvas.width) s.x = 0;
-                if (s.y < 0) s.y = starCanvas.height;
-                if (s.y > starCanvas.height) s.y = 0;
-            }
-            requestAnimationFrame(drawStars);
+        
+        positions[i*3] = x;
+        positions[i*3+1] = -y; // 让心形正向
+        positions[i*3+2] = z;
+    }
+    
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    // 粉红色渐变粒子材质
+    const colors = [];
+    for (let i = 0; i < particleCount; i++) {
+        const rand = Math.random();
+        // 粉红到淡红到玫瑰色
+        const r = 1.0;
+        const g = 0.5 + Math.random() * 0.3;
+        const b = 0.6 + Math.random() * 0.35;
+        colors.push(r, g, b);
+    }
+    geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+    
+    const particleMaterial = new THREE.PointsMaterial({
+        size: 0.28,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending
+    });
+    
+    const heartParticles = new THREE.Points(geometry, particleMaterial);
+    scene.add(heartParticles);
+    
+    // 添加背景光晕星星粒子 (小光点)
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1200;
+    const starPos = [];
+    for (let i = 0; i < starCount; i++) {
+        starPos.push((Math.random() - 0.5) * 200);
+        starPos.push((Math.random() - 0.5) * 120);
+        starPos.push((Math.random() - 0.5) * 80 - 40);
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPos), 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xFFA5C2, size: 0.12, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
+    const starsField = new THREE.Points(starGeo, starMat);
+    scene.add(starsField);
+    
+    let timeRotate = 0;
+    
+    function animate3D() {
+        requestAnimationFrame(animate3D);
+        timeRotate += 0.005;
+        // 爱心整体缓慢旋转和上下浮动
+        heartParticles.rotation.y = Math.sin(timeRotate * 0.3) * 0.2;
+        heartParticles.rotation.x = Math.sin(timeRotate * 0.5) * 0.1;
+        heartParticles.rotation.z = Math.sin(timeRotate * 0.4) * 0.15;
+        starsField.rotation.y += 0.0005;
+        starsField.rotation.x += 0.0003;
+        // 相机轻微摆动
+        camera.position.x = Math.sin(timeRotate * 0.2) * 0.6;
+        camera.position.y = Math.cos(timeRotate * 0.23) * 0.4;
+        camera.lookAt(0, 0, 0);
+        
+        renderer.render(scene, camera);
+    }
+    animate3D();
+    
+    window.addEventListener('resize', onWindowResize, false);
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // ------------------------- 俏皮按钮逻辑 + 拒绝彩蛋 -------------------------
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const uiContainer = document.getElementById('uiContainer');
+    let rejectCount = 0;
+    let successTriggered = false;
+    
+    // 拒绝文案彩蛋
+    const rejectMessages = [
+        "🥺 再想想嘛 ~",
+        "💔 我的心好痛... 再考虑一下？",
+        "你舍得吗？我超可爱的 ✨",
+        "哼，你一定是点错了叭！(◞‸◟)",
+        "好吧好吧～ 其实你超爱我的对不对？❤️"
+    ];
+    
+    function showRejectToast(msg) {
+        const toast = document.createElement('div');
+        toast.className = 'reject-toast';
+        toast.innerText = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.remove();
+        }, 1800);
+    }
+    
+    function updateNoButton() {
+        if (successTriggered) return;
+        if (rejectCount >= 5) {
+            // 第五次之后，不要按钮彻底变成「好吧我超爱你❤️」并且触发成功
+            noBtn.innerText = '💗 好吧我超爱你 💗';
+            noBtn.style.background = "linear-gradient(120deg, #FF8AAE, #FF5E8E)";
+            noBtn.style.color = "white";
+            noBtn.style.border = "2px solid #FFE0F0";
+            // 自动触发成功
+            triggerSuccess();
+            return;
         }
-
-        // 2. 爱心粒子画布 (高级动态爱心 + 光晕)
-        const heartCanvas = document.getElementById('heartCanvas');
-        const heartCtx = heartCanvas.getContext('2d');
-        let particles = [];
-        let particleCount = 220;
-        let heartRadius = 0;
-        let time = 0;
-        let heartScale = 1.0;
-        let pulseDirection = 1;
-
-        function resizeHeartCanvas() {
-            heartCanvas.width = window.innerWidth;
-            heartCanvas.height = window.innerHeight;
-            initHeartParticles();
+        
+        // 让不要按钮尺寸缩小 + 根据拒绝次数移动位置
+        let scaleValue = Math.max(0.55, 1 - rejectCount * 0.12);
+        noBtn.style.transform = `scale(${scaleValue})`;
+        if (rejectCount >= 2) {
+            // 随机偏移，俏皮逃跑效果 (轻微位移)
+            const offsetX = (Math.random() - 0.5) * 25;
+            const offsetY = (Math.random() - 0.5) * 20;
+            noBtn.style.transform += ` translate(${offsetX}px, ${offsetY}px)`;
         }
-
-        // 心形参数方程: x = 16 * sin(t)^3 , y = 13cos(t) - 5 cos(2t) - 2cos(3t) - cos(4t)  经典心形
-        // 映射到canvas坐标，并添加随机偏移半径创造粒子感
-        function getHeartPoint(t, scaleX, scaleY, offsetX, offsetY, randomOffset = 0) {
-            // t 0-2PI
-            const xRaw = 16 * Math.pow(Math.sin(t), 3);
-            const yRaw = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
-            let x = xRaw * scaleX + offsetX;
-            let y = -yRaw * scaleY + offsetY; // 因为canvas y轴向下
-            if (randomOffset) {
-                x += (Math.random() - 0.5) * randomOffset;
-                y += (Math.random() - 0.5) * randomOffset;
-            }
-            return { x, y };
+        if (rejectCount >= 3) {
+            noBtn.style.opacity = '0.7';
         }
-
-        class HeartParticle {
-            constructor(x, y, size, color, life = 1.0, speed = 0) {
-                this.x = x;
-                this.y = y;
-                this.originX = x;
-                this.originY = y;
-                this.size = size;
-                this.color = color;
-                this.life = life;
-                this.vx = (Math.random() - 0.5) * 0.5;
-                this.vy = (Math.random() - 0.5) * 0.5;
-                this.amp = Math.random() * 1.2;
-                this.speed = speed || 0.02;
-            }
-            update(timeVal) {
-                // 轻微浮动，保持心形轮廓但是梦幻感
-                this.x = this.originX + Math.sin(timeVal * 2 + this.originY * 0.02) * this.amp;
-                this.y = this.originY + Math.cos(timeVal * 1.7 + this.originX * 0.02) * this.amp;
-            }
-            draw(ctx) {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = "rgba(255, 80, 120, 0.8)";
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
+        if (rejectCount === 4) {
+            noBtn.innerText = '😭 别点我啦';
+        } else if (rejectCount < 4) {
+            noBtn.innerText = rejectCount >= 2 ? '🥺 不要嘛' : '😢 不要';
         }
-
-        function initHeartParticles() {
-            if (!heartCanvas) return;
-            const w = heartCanvas.width;
-            const h = heartCanvas.height;
-            const scale = Math.min(w, h) / 22;  // 心形大小适配屏幕 (原范围x:-16~16 y:-16~15左右)
-            const offsetX = w / 2;
-            const offsetY = h / 2 + 8;
-            particles = [];
-            // 生成均匀分布在心形轮廓上的粒子 + 内部填充一些
-            for (let i = 0; i < particleCount; i++) {
-                let t = Math.random() * Math.PI * 2;
-                let isEdge = Math.random() > 0.3; // 70%边缘粒子，30%内部扩散但依然心形范围
-                let randOff = isEdge ? 1.2 : 3.5;
-                let point = getHeartPoint(t, scale, scale, offsetX, offsetY, randOff);
-                let sizeRand = Math.random() * 2.5 + 1.2;
-                // 渐变色: 从粉红到亮红到淡金
-                const gradientColors = [`#FF6B8E`, `#FF87A6`, `#FFADC5`, `#FFD0E0`, `#FFB3C6`, `#FF9EB5`];
-                let colorPick = gradientColors[Math.floor(Math.random() * gradientColors.length)];
-                // 部分粒子带金色光晕
-                if (Math.random() > 0.8) colorPick = "#FFE0B5";
-                let lifeBase = 0.7 + Math.random() * 0.5;
-                let particle = new HeartParticle(point.x, point.y, sizeRand, colorPick, lifeBase);
-                particle.originX = point.x;
-                particle.originY = point.y;
-                particle.amp = Math.random() * 1.6;
-                particles.push(particle);
-            }
-            // 额外增加一些飘浮光点
-            for (let i = 0; i < 80; i++) {
-                let t = Math.random() * Math.PI * 2;
-                let point = getHeartPoint(t, scale, scale, offsetX, offsetY, 5);
-                let particle = new HeartParticle(point.x, point.y, Math.random() * 2 + 0.8, `rgba(255, 190, 210, 0.8)`);
-                particle.originX = point.x;
-                particle.originY = point.y;
-                particle.amp = Math.random() * 2;
-                particles.push(particle);
-            }
-        }
-
-        let animTime = 0;
-        function drawHeartParticles() {
-            if (!heartCtx) return;
-            heartCtx.clearRect(0, 0, heartCanvas.width, heartCanvas.height);
-            // 绘制光晕背景 (心形辉光)
-            heartCtx.save();
-            heartCtx.shadowBlur = 0;
-            for (let p of particles) {
-                p.update(animTime);
-                p.draw(heartCtx);
-            }
-            // 增加一层额外的爱心连线效果(高级感)
-            heartCtx.beginPath();
-            heartCtx.strokeStyle = "rgba(255, 140, 170, 0.25)";
-            heartCtx.lineWidth = 1.2;
-            for (let i = 0; i < particles.length; i += 7) {
-                let p1 = particles[i];
-                if (p1 && particles[i+3]) {
-                    let p2 = particles[i+3];
-                    let dx = p1.x - p2.x;
-                    let dy = p1.y - p2.y;
-                    let dist = Math.hypot(dx, dy);
-                    if (dist < 45 && dist > 5) {
-                        heartCtx.beginPath();
-                        heartCtx.moveTo(p1.x, p1.y);
-                        heartCtx.lineTo(p2.x, p2.y);
-                        heartCtx.strokeStyle = `rgba(255, 150, 180, ${0.15 - dist/200})`;
-                        heartCtx.stroke();
-                    }
-                }
-            }
-            heartCtx.restore();
-            animTime += 0.03;
-            requestAnimationFrame(drawHeartParticles);
-        }
-
-        // 自适应窗口同时重置粒子
-        window.addEventListener('resize', () => {
-            resizeStars();
-            initStars();
-            resizeHeartCanvas();
-        });
-
-        // 启动星空
-        resizeStars();
-        initStars();
-        drawStars();
-        resizeHeartCanvas();
-        drawHeartParticles();
-
-        // 让心形整体柔和呼吸 (改变scale不是必须，粒子本身动态就够了，额外加个全局光晕)
-        setInterval(() => {
-            heartScale += pulseDirection * 0.02;
-            if (heartScale >= 1.08) pulseDirection = -1;
-            if (heartScale <= 0.96) pulseDirection = 1;
-            // 可选调整背景光泽，不做重绘，由粒子动画完成。
-        }, 180);
-
-        // ---------- 3. 浪漫音乐 ( WebAudio 轻量氛围 ) ----------
-        // 为了高级体验，用音频振荡器模拟简单梦幻旋律 + 可选择真实背景音乐(但避免微信自动策略，使用用户手势)
-        // 优雅方式: 创建 AudioContext，按下按钮后播放简单和弦音序，表白音效+轻柔背景
-        let audioCtx = null;
-        let isAudioAllowed = false;
-        let musicInterval = null;
-        let isPlaying = false;
-
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        // 播放一个甜蜜短音符 (频率, 时长)
-        function playTone(freq, startTime, duration, volume = 0.2) {
-            if (!audioCtx || !isAudioAllowed) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(volume, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-        }
-
-        function playLoveMelody() {
-            if (!audioCtx || !isAudioAllowed) return;
-            const now = audioCtx.currentTime;
-            // 简单和弦: 浪漫C大调
-            const notes = [523.25, 659.25, 783.99, 523.25, 587.33, 698.46, 880.00, 987.77];
-            let t = now;
-            for (let i = 0; i < notes.length; i++) {
-                playTone(notes[i], t + i * 0.22, 0.35, 0.15);
-                if (i % 2 === 0) playTone(notes[i] * 1.5, t + i * 0.22 + 0.1, 0.25, 0.08);
-            }
-            // 结尾爱的音符
+        
+        // 同时可以按钮逐渐变大 (诱惑)
+        const yesScale = 1 + rejectCount * 0.07;
+        yesBtn.style.transform = `scale(${Math.min(yesScale, 1.35)})`;
+        yesBtn.style.boxShadow = `0 0 15px #FF6B9E`;
+    }
+    
+    // 满屏弹幕 + 爱心爆炸
+    function startDanmakuAndExplosion() {
+        // 弹幕: 满屏「李婉我喜欢你」「李婉小宝宝」「爱你哟」
+        const phrases = ["💖 李婉我喜欢你 💖", "🌸 李婉小宝宝 🌸", "✨ 爱你一万年 ✨", "💗 超超超喜欢你 💗", "🥰 婉婉最可爱 🥰", "❤️ 在一起一辈子 ❤️"];
+        const container = document.getElementById('danmakuContainer');
+        for (let i = 0; i < 48; i++) {
             setTimeout(() => {
-                if (audioCtx && isAudioAllowed) {
-                    playTone(1046.50, audioCtx.currentTime, 0.9, 0.2);
-                }
-            }, 400);
+                const dan = document.createElement('div');
+                dan.className = 'danmaku-item';
+                const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+                dan.innerText = randomPhrase;
+                const size = 1 + Math.random() * 1.2;
+                dan.style.fontSize = `${size}rem`;
+                dan.style.top = `${Math.random() * 85 + 5}%`;
+                dan.style.animationDuration = `${6 + Math.random() * 5}s`;
+                dan.style.animationDelay = '0s';
+                dan.style.color = `hsl(${330 + Math.random() * 20}, 85%, 65%)`;
+                dan.style.fontWeight = 'bold';
+                container.appendChild(dan);
+                setTimeout(() => dan.remove(), 11000);
+            }, i * 180);
         }
-
-        // 轻柔循环氛围 (可选: 一个小旋律循环)
-        function startAmbientMusic() {
-            if (musicInterval) clearInterval(musicInterval);
-            if (!audioCtx || !isAudioAllowed) return;
-            // 每隔9秒播放一小段温柔琶音
-            musicInterval = setInterval(() => {
-                if (!isAudioAllowed || !audioCtx) return;
-                const now = audioCtx.currentTime;
-                playTone(440, now, 0.6, 0.05);
-                playTone(554.37, now + 0.3, 0.5, 0.05);
-                playTone(659.25, now + 0.7, 0.7, 0.06);
-            }, 8800);
+        
+        // 爱心爆炸效果 (大量上升爱心)
+        const explosionDiv = document.getElementById('explosionContainer');
+        for (let i = 0; i < 150; i++) {
+            setTimeout(() => {
+                const heartSpan = document.createElement('div');
+                heartSpan.className = 'float-heart';
+                heartSpan.innerHTML = ['❤️', '💖', '💗', '💓', '🌸', '✨', '💕'][Math.floor(Math.random() * 7)];
+                heartSpan.style.left = `${Math.random() * 100}%`;
+                heartSpan.style.bottom = `-20px`;
+                heartSpan.style.fontSize = `${1.2 + Math.random() * 2}rem`;
+                heartSpan.style.animationDuration = `${1 + Math.random() * 1.5}s`;
+                explosionDiv.appendChild(heartSpan);
+                setTimeout(() => heartSpan.remove(), 2000);
+            }, i * 35);
         }
-
-        function stopAmbientMusic() {
-            if (musicInterval) {
-                clearInterval(musicInterval);
-                musicInterval = null;
-            }
+    }
+    
+    // 成功后的核心逻辑: 隐藏原来UI，显示3D爱心最大，出现成功文字
+    function triggerSuccess() {
+        if (successTriggered) return;
+        successTriggered = true;
+        
+        // 隐藏原有按钮卡片但保留ui层逐渐透明
+        uiContainer.style.transition = "opacity 0.8s";
+        uiContainer.style.opacity = "0";
+        uiContainer.style.pointerEvents = "none";
+        
+        // 显示3D canvas全效
+        canvas3d.style.opacity = "1";
+        
+        // 满屏弹幕与爱心爆炸
+        startDanmakuAndExplosion();
+        
+        // 创建成功大标题
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-title';
+        successDiv.innerHTML = '✨ 李婉小宝宝，我们在一起啦 ✨';
+        document.body.appendChild(successDiv);
+        
+        // 额外飘落心形花瓣效果 (粉色花瓣)
+        for (let i = 0; i < 100; i++) {
+            setTimeout(() => {
+                const petal = document.createElement('div');
+                petal.style.position = 'fixed';
+                petal.style.left = `${Math.random() * 100}%`;
+                petal.style.top = `-20px`;
+                petal.style.fontSize = `${1.2 + Math.random() * 1.8}rem`;
+                petal.style.pointerEvents = 'none';
+                petal.style.zIndex = '55';
+                petal.innerHTML = ['🌸', '💗', '❤️', '💖', '✨', '🌹'][Math.floor(Math.random() * 6)];
+                petal.style.animation = `floatUp 2s ease-out forwards`;
+                document.body.appendChild(petal);
+                setTimeout(() => petal.remove(), 2000);
+            }, i * 40);
         }
-
-        // 按钮交互 + 激活音乐
-        const magicBtn = document.getElementById('magicBtn');
-        const musicControlDiv = document.getElementById('musicControl');
-        const musicStatusSpan = document.getElementById('musicStatus');
-
-        async function enableAudioAndStart() {
-            if (isAudioAllowed) {
-                // 如果已激活，播放一次旋律并显示特效
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    await audioCtx.resume();
-                }
-                playLoveMelody();
-                return;
-            }
-            initAudio();
-            if (audioCtx) {
-                await audioCtx.resume();
-                isAudioAllowed = true;
-                musicStatusSpan.innerText = '🎶 心动旋律播放中';
-                // 播放开场和弦
-                playLoveMelody();
-                startAmbientMusic();
-                // 额外在canvas上闪现烟花粒子效果（轻量提升）
-                createFireworkEffect();
-            }
+        
+        // 拒绝按钮完全移除
+        if (noBtn && noBtn.parentNode) noBtn.style.display = 'none';
+        // 确保 yes 按钮动画
+        yesBtn.style.transform = 'scale(1.2)';
+        yesBtn.innerText = '❤️ 答应啦 ❤️';
+        
+        // 在控制台输出浪漫
+        console.log("%c✨ 李婉小宝宝，告白成功 ✨", "color:#FF4D7A; font-size:18px;");
+    }
+    
+    // 点击「可以」按钮
+    yesBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (successTriggered) return;
+        triggerSuccess();
+    });
+    
+    // 点击「不要」按钮
+    noBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (successTriggered) return;
+        rejectCount++;
+        if (rejectCount <= 5) {
+            const msgIndex = Math.min(rejectCount - 1, rejectMessages.length - 1);
+            showRejectToast(rejectMessages[msgIndex]);
+            updateNoButton();
+        } else {
+            // 超过五次依然调用最终成功
+            triggerSuccess();
         }
-
-        // 简单点击烟花特效 (增加视觉高潮)
-        function createFireworkEffect() {
-            for (let i = 0; i < 40; i++) {
-                setTimeout(() => {
-                    if (heartCtx) {
-                        const x = Math.random() * heartCanvas.width;
-                        const y = Math.random() * heartCanvas.height * 0.6 + 100;
-                        heartCtx.beginPath();
-                        heartCtx.arc(x, y, Math.random() * 4 + 2, 0, Math.PI * 2);
-                        heartCtx.fillStyle = `rgba(255, 100, 150, ${Math.random() * 0.7 + 0.4})`;
-                        heartCtx.fill();
-                        setTimeout(() => {
-                            // 清除单独烟花不是必须，整体动画刷新会覆盖
-                        }, 300);
-                    }
-                }, i * 40);
-            }
-            // 额外显示飘心文字
-            const msgDiv = document.createElement('div');
-            msgDiv.innerText = '💖 李婉小宝宝，我好喜欢你 💖';
-            msgDiv.style.position = 'fixed';
-            msgDiv.style.bottom = '30%';
-            msgDiv.style.left = '0';
-            msgDiv.style.right = '0';
-            msgDiv.style.textAlign = 'center';
-            msgDiv.style.fontSize = '1.2rem';
-            msgDiv.style.fontWeight = 'bold';
-            msgDiv.style.color = '#FFECF0';
-            msgDiv.style.textShadow = '0 0 12px red';
-            msgDiv.style.zIndex = '30';
-            msgDiv.style.background = 'rgba(0,0,0,0.3)';
-            msgDiv.style.backdropFilter = 'blur(12px)';
-            msgDiv.style.padding = '10px';
-            msgDiv.style.borderRadius = '60px';
-            msgDiv.style.width = 'fit-content';
-            msgDiv.style.margin = 'auto';
-            msgDiv.style.pointerEvents = 'none';
-            document.body.appendChild(msgDiv);
-            setTimeout(() => { msgDiv.style.opacity = '0'; setTimeout(() => msgDiv.remove(), 1000); }, 1800);
+        // 如果拒绝已经到5次以上在updateNoButton里已经触发成功
+        if (rejectCount === 5) {
+            updateNoButton(); // 会触发 triggerSuccess
         }
-
-        magicBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await enableAudioAndStart();
-            // 再增加一个爱心喷涌视觉
-            for(let i=0;i<30;i++) {
-                setTimeout(() => {
-                    if(heartCtx) {
-                        heartCtx.beginPath();
-                        heartCtx.arc(heartCanvas.width/2 + (Math.random()-0.5)*80, heartCanvas.height/2 -20 + (Math.random()-0.5)*60, Math.random()*5+1, 0, Math.PI*2);
-                        heartCtx.fillStyle = `rgba(255, 140, 180, 0.8)`;
-                        heartCtx.fill();
-                    }
-                }, i*50);
-            }
-        });
-
-        musicControlDiv.addEventListener('click', async () => {
-            if (!isAudioAllowed) {
-                await enableAudioAndStart();
-            } else {
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    await audioCtx.resume();
-                    musicStatusSpan.innerText = '🎶 心动旋律播放中';
-                    startAmbientMusic();
-                } else {
-                    if (musicInterval) {
-                        stopAmbientMusic();
-                        musicStatusSpan.innerText = '🎵 音乐暂停，轻触继续';
-                        if(audioCtx) await audioCtx.suspend();
-                    } else {
-                        startAmbientMusic();
-                        if(audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
-                        musicStatusSpan.innerText = '🎶 心动旋律播放中';
-                    }
-                }
-            }
-        });
-
-        // 自动首次提示优雅微信背景交互: 用户点击任意地方也可初始化音乐，但为了体验不做强制，用户点按钮即可
-        // 为了符合微信策略，初次触摸body可激活音频上下文但不自动播放，放在按钮主导
-        document.body.addEventListener('touchstart', function initTouchOnce() {
-            if (!isAudioAllowed && audioCtx) {
-                // 只是预创建但不自动播放旋律，避免骚扰，保留用户按钮决定
-            }
-        }, { once: true });
-    })();
+    });
+    
+    // 增加额外俏皮: 鼠标靠近「不要」按钮时轻微偏移 (电脑hover 手机touch模拟)
+    noBtn.addEventListener('mouseenter', () => {
+        if (successTriggered) return;
+        if (rejectCount >= 2) {
+            const offsetX = (Math.random() - 0.5) * 18;
+            const offsetY = (Math.random() - 0.5) * 15;
+            noBtn.style.transform += ` translate(${offsetX}px, ${offsetY}px)`;
+            setTimeout(() => {
+                if (!successTriggered) noBtn.style.transform = noBtn.style.transform.replace(/translate\(.*?\)/, '');
+            }, 200);
+        }
+    });
+    
+    // 初始化稍微让3D画布渐显
+    setTimeout(() => {
+        canvas3d.style.opacity = "1";
+    }, 500);
+    
+    // 响应窗口适配3D渲染
+    onWindowResize();
 </script>
 </body>
 </html>
